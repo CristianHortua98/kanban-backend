@@ -1,6 +1,7 @@
 import { IsEmail } from "class-validator";
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Rol } from "./rol.entity";
+import { Project } from "src/projects/entities/project.entity";
 
 @Entity('users')
 export class User {
@@ -32,7 +33,7 @@ export class User {
         length: 20,
         unique: true
     })
-    user: string;
+    username: string;
 
     @Column({
         type: 'varchar',
@@ -68,6 +69,19 @@ export class User {
     })
     roles: Rol[];
 
+
+    @OneToMany(
+        () => Project,
+        project => project.user_created
+    )
+    createdProjects: Project[];
+
+    @ManyToMany(
+        () => Project,
+        project => project.collaborators
+    )
+    projects: Project[];
+
     @Column({
         type: 'int',
         default: 1
@@ -84,7 +98,7 @@ export class User {
     checkFieldBeforeInsert(){
 
         this.email = this.email.toLowerCase().trim();
-        this.user = this.user.toLowerCase().trim();
+        this.username = this.username.toLowerCase().trim();
 
     }
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,8 +18,6 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(Rol)
     private readonly rolesReporsitory: Repository<Rol>,
-    private readonly jwtService: JwtService,
-    private readonly authService: AuthService
   ){}
   
   async create(createUserDto: CreateUserDto){
@@ -50,12 +48,12 @@ export class UsersService {
 
       return {
 
-        userResponse,
-        token: this.authService.getJwtToken({
-          id: userResponse.id,
-          document: userResponse.document,
-          user: userResponse.user
-        })
+        userResponse
+        // token: this.authService.getJwtToken({
+        //   id: userResponse.id,
+        //   document: userResponse.document,
+        //   user: userResponse.user
+        // })
 
       }
 
@@ -67,16 +65,84 @@ export class UsersService {
 
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(){
+
+    return await this.usersRepository.find();
+
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number) {
+
+    const user = await this.usersRepository.findOneBy({
+      id: id
+    });
+
+    if(!user){
+      throw new NotFoundException(`User with id: ${id} not found.`);
+    }
+
+    delete user.password;
+
+    return user;
+
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async findUsername(username: string){
+
+    const user = await this.usersRepository.findOne({
+      where: {username: username},
+      select: { id: true, fullname: true, document: true, phone: true, username: true, password: true, email: true, is_active: true, create_at: true, projects: true }
+    });
+
+    if(!user){
+      throw new NotFoundException(`User with Username: ${username} not found.`);
+    }
+
+    return user;
+
+  }
+
+  async update(id: number, updateUserDto: UpdateUserDto) {
+
+    const { roles, ...userData } = updateUserDto;
+
+    if(roles.length === 0){
+      throw new BadRequestException(`Roles is required.`);
+    }
+
+    const roleArray = await this.rolesReporsitory.findBy({
+      id: In(roles)
+    })
+
+    if(roleArray.length !== roles.length){
+      throw new InternalServerErrorException(`Roles not found`);
+    }
+
+    const user = await this.usersRepository.preload({
+      id: id,  
+      ...userData
+    });
+
+
+    if(!user){
+      throw new NotFoundException(`User with id: ${id} not found.`);
+    }
+
+    try{
+
+      const newUser = await this.usersRepository.save({
+        roles: roleArray,
+        ...user
+      });
+
+      return newUser;
+      
+    }catch(error) {
+
+      this.handleDBError(error);
+      
+    }
+
   }
 
   remove(id: number) {

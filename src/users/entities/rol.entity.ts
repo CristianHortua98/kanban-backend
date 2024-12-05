@@ -15,7 +15,7 @@ export class Rol{
 
     @ManyToMany(
         () => User,
-        user => user.roles
+        user => user.roles,
     )
     users: User[];
 

@@ -15,7 +15,9 @@ import { AuthModule } from 'src/auth/auth.module';
     ConfigModule,
     TypeOrmModule.forFeature([User, Rol]),
     JwtModule,
-    AuthModule
+  ],
+  exports: [
+    UsersService
   ]
 })
 export class UsersModule {}

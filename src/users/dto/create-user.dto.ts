@@ -24,7 +24,7 @@ export class CreateUserDto {
 
     @IsString()
     @MinLength(5)
-    user: string;
+    username: string;
 
     @IsString()
     @MinLength(6)

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards, Put } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -15,9 +15,19 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @Delete('desactive-user/:id')
+  desactiveUser(@Param('id', ParseIntPipe) id: number){
+    return this.usersService.desactiveUser(id);
+  }
+
   @Get()
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Get('all-roles')
+  findAllRoles(){
+    return this.usersService.findAllRoles();
   }
 
   @Get(':id')

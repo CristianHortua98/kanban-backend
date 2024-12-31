@@ -54,7 +54,7 @@ export class AuthService {
 
   async checkToken(request: Request){
 
-    console.log(request);
+    // console.log(request);
 
     const user: User = request['user'];
 

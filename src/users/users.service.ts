@@ -67,7 +67,13 @@ export class UsersService {
 
   async findAll(){
 
-    return await this.usersRepository.find();
+    return await this.usersRepository.find({where: {is_active: 1}});
+
+  }
+
+  async findAllRoles(){
+
+    return this.rolesReporsitory.find();
 
   }
 
@@ -104,7 +110,7 @@ export class UsersService {
 
   async update(id: number, updateUserDto: UpdateUserDto) {
 
-    const { roles, ...userData } = updateUserDto;
+    const { roles, password, ...userData } = updateUserDto;
 
     if(roles.length === 0){
       throw new BadRequestException(`Roles is required.`);
@@ -119,7 +125,8 @@ export class UsersService {
     }
 
     const user = await this.usersRepository.preload({
-      id: id,  
+      id: id,
+      password: bcrypt.hashSync(password, 10),
       ...userData
     });
 
@@ -138,6 +145,32 @@ export class UsersService {
       return newUser;
       
     }catch(error) {
+
+      this.handleDBError(error);
+      
+    }
+
+  }
+
+  async desactiveUser(id: number){
+
+    const user = await this.usersRepository.preload({
+      id: id,
+      is_active: 0
+    });
+
+    if(!user){
+      throw new NotFoundException(`User with id: ${id} not found.`);
+    }
+
+    try{
+      
+      const userInstance = await this.usersRepository.save(user);
+      delete userInstance.password;
+
+      return userInstance;
+
+    }catch(error){
 
       this.handleDBError(error);
       

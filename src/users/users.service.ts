@@ -3,7 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { Rol } from './entities/rol.entity';
 import { JwtService } from '@nestjs/jwt';
 
@@ -62,6 +62,17 @@ export class UsersService {
       this.handleDBError(error);
       
     }
+
+  }
+
+  async findAllCollaborators(idUser: number){
+
+    return await this.usersRepository.find({
+      where: { 
+        id: Not(idUser),
+        is_active: 1 
+      }
+    });
 
   }
 

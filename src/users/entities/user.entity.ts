@@ -2,6 +2,8 @@ import { IsEmail } from "class-validator";
 import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Rol } from "./rol.entity";
 import { Project } from "src/projects/entities/project.entity";
+import { Task } from "src/tasks/entities/task.entity";
+import { Notification } from "src/notifications/entities/notification.entity";
 
 @Entity('users')
 export class User {
@@ -76,11 +78,30 @@ export class User {
     )
     createdProjects: Project[];
 
+    @OneToMany(
+        () => Task,
+        task => task.user_created
+    )
+    createdTasks: Task[];
+
     @ManyToMany(
         () => Project,
         project => project.collaborators
     )
     projects: Project[];
+
+    @OneToMany(
+        () => Task,
+        task => task.user_assigned
+    )
+    tasks: Task[];
+
+
+    @OneToMany(
+        () => Notification,
+        notification => notification.id_user
+    )
+    notifications: Notification[];
 
     @Column({
         type: 'int',

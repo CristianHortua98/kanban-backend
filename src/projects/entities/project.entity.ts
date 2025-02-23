@@ -1,5 +1,6 @@
+import { Task } from "src/tasks/entities/task.entity";
 import { User } from "src/users/entities/user.entity";
-import { BeforeInsert, Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('projects')
 export class Project {
@@ -15,7 +16,8 @@ export class Project {
 
     @Column({
         type: 'varchar',
-        length: 10
+        length: 10,
+        unique: true
     })
     code: string;
 
@@ -43,6 +45,12 @@ export class Project {
         }
     })
     collaborators: User[];
+
+    @OneToMany(
+        () => Task,
+        task => task.project_id
+    )
+    tasks: Task[];
 
 
     @Column({

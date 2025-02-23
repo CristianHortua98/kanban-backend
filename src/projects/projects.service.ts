@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
 import { UsersService } from 'src/users/users.service';
 import { User } from 'src/users/entities/user.entity';
-import { CreateProjectCollaborators } from './dto/create-project-collaborators.dto';
+import { CreateProjectCollaboratorsDto } from './dto/create-project-collaborators.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -39,43 +39,93 @@ export class ProjectsService {
     }catch(error){
       
       console.log(error);
-      throw new InternalServerErrorException(`Check logs server`);
+      this.handleDBError(error);
+      // throw new InternalServerErrorException(`Check logs server`);
 
     }
 
   }
 
-  async addProjectCollaborators(createProjectCollaborators: CreateProjectCollaborators){
+  async detailProjectCollaborators(idProject: number){
+
+    return await this.projectRepository.findOne({
+      relations: ['collaborators'],
+      where: { id: idProject }
+    });
+
+  }
+
+  async addProjectCollaborators(createProjectCollaborators: CreateProjectCollaboratorsDto){
 
     const { collaborators, project } = createProjectCollaborators;
 
     const projectInstance = await this.projectRepository.findOne({
-      where: {id: project},
-      relations: ['collaborators']
-    })
+      where: { id: project },
+      relations: ['collaborators'], // Asegúrate de cargar la relación
+    });
 
-    for (const collaborator of collaborators) {
-
-      let userCollaborator = await this.usersService.findOne(collaborator);
-
-      if(!userCollaborator){
-        throw new NotFoundException(`User id: ${collaborator} not found.`);
-      }
-      
-      projectInstance.collaborators.push(userCollaborator);
-
+    if (!projectInstance) {
+      throw new NotFoundException(`Project id: ${project} not found.`);
     }
 
-    try{
+    // Filtrar colaboradores existentes que ya no están en la nueva lista
+    projectInstance.collaborators = projectInstance.collaborators.filter(existingCollaborator =>
+      collaborators.includes(existingCollaborator.id)
+    );
 
+    // Agregar los nuevos colaboradores
+    for (const collaborator of collaborators) {
+      const userCollaborator = await this.usersService.findOne(collaborator);
+
+      if (!userCollaborator) {
+        throw new NotFoundException(`User id: ${collaborator} not found.`);
+      }
+
+      // Evitar duplicados
+      if (!projectInstance.collaborators.some(c => c.id === userCollaborator.id)) {
+        projectInstance.collaborators.push(userCollaborator);
+      }
+    }
+
+    try {
       return await this.projectRepository.save(projectInstance);
-      
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException(`Check server logs`);
+    }
+
+
+  }
+
+  async listProjectsUser(idUser: number){
+
+    const user = await this.usersService.findOne(idUser);
+
+    try {
+     
+      return this.projectRepository.find({where: {user_created: user}});
+
     }catch(error){
 
       console.log(error);
       throw new InternalServerErrorException(`Check logs server`);
       
     }
+
+  }
+
+  async listProjectsCollaborator(idUser: number){
+
+    // return this.projectRepository
+    //   .createQueryBuilder('project')
+    //   .innerJoin('projects_collaborators', 'pc', 'project.id = pc.id_project')
+    //   .where('pc.id_user = :idUser', { idUser })
+    //   .getMany();
+
+    return this.projectRepository.find({
+      relations: ['collaborators'],
+      where: { collaborators: {id: idUser} }
+    });
 
   }
 
@@ -103,5 +153,21 @@ export class ProjectsService {
 
   remove(id: number) {
     return `This action removes a #${id} project`;
+  }
+
+  private handleDBError(error: any){
+  
+    if(error.sqlState === '23000'){
+
+      console.log(error);
+      throw new BadRequestException(`The Code Project already exist.`);
+
+    }else{
+
+      console.log(error);
+      throw new InternalServerErrorException(`Please check the server log.`);
+      
+    }
+
   }
 }

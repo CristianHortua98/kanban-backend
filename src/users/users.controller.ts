@@ -20,6 +20,11 @@ export class UsersController {
     return this.usersService.desactiveUser(id);
   }
 
+  @Get('all-collaborators/:id_user')
+  findAllCollaborators(@Param('id_user', ParseIntPipe) idUser: number) {
+    return this.usersService.findAllCollaborators(idUser);
+  }
+
   @Get()
   findAll() {
     return this.usersService.findAll();

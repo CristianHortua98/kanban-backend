@@ -3,6 +3,7 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColum
 import { TaskStatus } from "../interfaces/task-status.enum";
 import { Project } from "src/projects/entities/project.entity";
 import { Notification } from "src/notifications/entities/notification.entity";
+import { Comment } from "src/comments/entities/comment.entity";
 
 @Entity('tasks')
 export class Task {
@@ -81,5 +82,12 @@ export class Task {
         notification => notification.id_task
     )
     notifications: Notification[];
+
+
+    @OneToMany(
+        () => Comment,
+        comment => comment.task
+    )
+    comments: Comment[];
 
 }

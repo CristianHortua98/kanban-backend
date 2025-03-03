@@ -8,6 +8,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     ProjectsModule,
     TasksModule,
     UploadsModule,
-    NotificationsModule
+    NotificationsModule,
+    CommentsModule
   ],
   controllers: [],
   providers: [AppService],
